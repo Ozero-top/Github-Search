@@ -227,3 +227,4 @@ npx wrangler pages deploy . --project-name=github-search
 本项目源码以 MIT 协议开源，可自由使用、修改、分发。
 
 GitHub API、仓库内容、License 信息等数据权利归相应权利人所有。
+![image](https://raw.githubusercontent.com/Ozero-top/OpenHub/refs/heads/main/OpenHun.png)
