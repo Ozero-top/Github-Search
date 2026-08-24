@@ -207,7 +207,7 @@ docker compose down
 
 #### 常用命令
 
-| 操作 | 命令 |
+| 操作　　　　　| 命令 |
 |------|------|
 | 查看运行状态 | `docker ps --filter name=github-search` |
 | 查看日志 | `docker logs -f github-search` |
