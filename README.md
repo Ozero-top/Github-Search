@@ -111,22 +111,12 @@ npx http-server -p 8000
 
 适合持续集成，推送代码后自动部署。
 
-1. 将本目录推送到 GitHub / GitLab 仓库
-2. 登录 [Cloudflare Dashboard](https://dash.cloudflare.com/) → Workers & Pages → Create → Pages → Connect to Git
-3. 选择刚才推送的仓库
-4. 在 **Build configuration** 中按下表填写：
-
-   | 字段 | 值 |
-   |------|----|
-   | Framework preset | `None` |
-   | Build command | （留空） |
-   | Build output directory | `/`（根目录就是站点根） |
-   | Root directory | （留空） |
-   | Environment variables | （无需） |
-
+1. 登录 [Cloudflare Dashboard](https://dash.cloudflare.com/)
+2. Workers & Pages → Create → Looking to deploy Pages? Get started → 选择Drag and drop your files → 点击Get started
+3. 填入 Project name：例如 'OpenHub' → 点击 Create project
+4. 将下载的.zip压缩包 拖入Upload your project assets下面 点击 Deploy site 即可部署成功
 5. 点击 **Save and Deploy**，等待 30 秒左右即可获得 `https://<project-name>.pages.dev` 域名
-
-> 后续每次 `git push` 到默认分支都会自动触发重新部署。
+> 后续每次在容器右上角点击 `Create deployment` 上传.zip重新部署。
 
 ### 方式二：Direct Upload 直传
 
