@@ -18,6 +18,7 @@
 - [部署方式（任选其一）](#部署方式任选其一)
   - [方式一：Git 连接（推荐）](#方式一git-连接推荐)
   - [方式二：Direct Upload 直传](#方式二direct-upload-直传)
+  - [方式三：Docker 容器部署](#方式三docker-容器部署)
 - [配置说明](#配置说明)
 - [安全说明](#安全说明)
 - [免责声明](#免责声明)
@@ -65,7 +66,7 @@
 | 脚本 | 原生 JavaScript（无框架、无打包工具、无依赖） |
 | 数据源 | GitHub REST Search API（`/search/repositories`） |
 | 持久化 | `localStorage`（仅 `gh_search_history`、`gh_theme_preference`、`gh_api_proxy`） |
-| 部署 | 任意静态托管平台（Cloudflare Pages / GitHub Pages / Vercel / Netlify） |
+| 部署 | 任意静态托管平台（Cloudflare Pages / GitHub Pages / Vercel / Netlify）或 Docker 容器 |
 
 ---
 
@@ -142,6 +143,94 @@ npx wrangler pages deploy . --project-name=github-search
 2. 创建项目名（如 `github-search`）
 3. 将本目录所有文件（`index.html`、`assets/`、`favicon.ico`）整体拖入上传区
 4. 部署完成后获得 `https://<project-name>.pages.dev` 域名
+
+### 方式三：Docker 容器部署
+
+适合自建服务器、内网部署或需要统一环境管理的场景。镜像基于 `nginx:stable-alpine`，体积约 93MB，开箱即用。
+
+> 镜像已发布至 DockerHub：[`ovitor/github-search`](https://hub.docker.com/r/ovitor/github-search)
+
+#### 选项 A：拉取官方镜像直接运行（推荐）
+
+```powershell
+# 拉取镜像
+docker pull ovitor/github-search:latest
+
+# 启动容器（宿主机 8080 端口映射到容器 80 端口）
+docker run -d --name github-search -p 8080:80 --restart unless-stopped ovitor/github-search:latest
+```
+
+浏览器访问 `http://localhost:8080`（远程服务器请将 `localhost` 替换为服务器公网 IP）。
+
+#### 选项 B：从源码自行构建
+
+```powershell
+# 进入项目根目录（含 Dockerfile）
+cd /path/to/github-search
+
+# 构建镜像
+docker build -t ovitor/github-search:latest .
+
+# 运行容器
+docker run -d --name github-search -p 8080:80 ovitor/github-search:latest
+```
+
+#### 选项 C：Docker Compose
+
+在项目根目录创建 `docker-compose.yml`：
+
+```yaml
+services:
+  github-search:
+    image: ovitor/github-search:latest
+    # 如需自行构建，取消下面两行注释
+    # build: .
+    # image: ovitor/github-search:local
+    container_name: github-search
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+```
+
+启动与停止：
+
+```powershell
+# 后台启动
+docker compose up -d
+
+# 查看日志
+docker compose logs -f
+
+# 停止并移除
+docker compose down
+```
+
+#### 常用命令
+
+| 操作 | 命令 |
+|------|------|
+| 查看运行状态 | `docker ps --filter name=github-search` |
+| 查看日志 | `docker logs -f github-search` |
+| 进入容器排查 | `docker exec -it github-search sh` |
+| 停止容器 | `docker stop github-search` |
+| 移除容器 | `docker rm -f github-search` |
+| 更新到最新版 | `docker pull ovitor/github-search:latest && docker rm -f github-search && docker run -d --name github-search -p 8080:80 --restart unless-stopped ovitor/github-search:latest` |
+
+#### 自定义端口
+
+将 `-p 8080:80` 中的 `8080` 改为任意宿主机端口即可，例如 `-p 80:80`（需 root/管理员权限，且确认 80 端口未被占用）。
+
+#### 环境要求
+
+- 已安装 Docker Engine（20.10+）或 Docker Desktop
+- Linux / macOS / Windows 均可运行
+- 首次拉取约 93MB，之后更新为增量层
+
+#### 生产部署建议
+
+- 在反向代理（Nginx / Caddy / Traefik）后挂载 HTTPS，并转发到容器暴露端口
+- 设置 `--restart unless-stopped` 或在 Compose 中配置 `restart: unless-stopped`，保证宿主机重启后自动恢复
+- 如需负载均衡或多实例，给每个容器分配不同宿主机端口，由反向代理统一分流
 
 ---
 
