@@ -23,7 +23,7 @@
     document.documentElement.style.colorScheme = theme;
   })();
 </script>
-<link rel="stylesheet" href="assets/styles.css?v=20260824-7" />
+<link rel="stylesheet" href="assets/styles.css?v=20260903-softui-2" />
 </head>
 <body>
   <header>
@@ -100,17 +100,18 @@
           <option value="name,readme">名称+README</option>
           <option value="name,description,topics,readme">包含 README</option>
         </select>
-        <label id="rerankToggle" title="标题命中加权 / 多词覆盖率 / 中文优先 / star 密度修正。仅改变本地显示顺序,不请求 GitHub"
-          style="display:inline-flex;align-items:center;gap:5px;cursor:pointer;color:var(--fg-muted);font-size:12px;padding:3px 8px;border-radius:999px;background:rgba(110,168,255,.06);border:1px solid rgba(110,168,255,.22);transition:all .15s;user-select:none;">
-          <input id="rerank" type="checkbox" style="accent-color:var(--accent-fg);" /> 🧠 本地二次精排
+        <label id="rerankToggle" class="quick-pill" title="更新日期优先 + 标题命中加权 + 多词覆盖率 + 中文加分。仅改变本地显示顺序,不请求 GitHub">
+          <input id="rerank" type="checkbox" class="quick-pill-input" />
+          <span class="quick-pill-dot" aria-hidden="true"></span>
+          <span class="quick-pill-label">🧠 本地二次精排</span>
         </label>
-        <button id="tokenQuickBtn" type="button" title="Token 仅保留在当前标签页内存,只直连 GitHub 官方 API,不会发送给第三方代理"
-          style="display:inline-flex;align-items:center;gap:5px;cursor:pointer;color:var(--attention-fg);font-size:12px;padding:4px 10px;border-radius:999px;background:rgba(210,153,34,.06);border:1px solid rgba(210,153,34,.3);transition:all .15s;user-select:none;box-shadow:inset 0 1px 0 rgba(255,255,255,.03);">
-          设置 Personal Token<span style="opacity:.85"></span>
+        <button id="tokenQuickBtn" type="button" class="quick-pill quick-pill--warn" title="Token 仅保留在当前标签页内存,只直连 GitHub 官方 API,不会发送给第三方代理">
+          <span class="quick-pill-dot quick-pill-dot--static" aria-hidden="true"></span>
+          <span class="quick-pill-label">🔑 设置 Personal Token</span>
         </button>
-        <button id="proxQuickBtn" type="button" title="切换 GitHub API 代理源:第三方代理仅匿名访问,不会携带 Token"
-          style="display:inline-flex;align-items:center;gap:5px;cursor:pointer;color:var(--accent-fg);font-size:12px;padding:4px 10px;border-radius:999px;background:rgba(110,168,255,.06);border:1px solid rgba(110,168,255,.28);transition:all .15s;user-select:none;box-shadow:inset 0 1px 0 rgba(255,255,255,.03);">
-           代理设置 <span style="opacity:.85">(国内加速)</span>
+        <button id="proxQuickBtn" type="button" class="quick-pill quick-pill--accent" title="切换 GitHub API 代理源:第三方代理仅匿名访问,不会携带 Token">
+          <span class="quick-pill-dot quick-pill-dot--static" aria-hidden="true"></span>
+          <span class="quick-pill-label">🌐 代理设置 <span style="opacity:.85">(国内加速)</span></span>
         </button>
         </span>
         <span class="hint">支持 <code>language:go</code> <code>stars:&gt;1000</code> <code>topic:cli</code> <code>license:mit</code></span>
@@ -157,7 +158,7 @@
 
   <footer>
     <div style="margin-bottom:6px;">
-      数据来源: · GitHub · <button id="openAccuracy" class="link" style="color:var(--fg-muted);font-size:12px;padding:0 4px;">🛡️ 本站功能说明</button>
+      数据来源: · GitHub · <button id="openAccuracy" class="link" style="color:var(--fg-muted);font-size:12px;padding:0 4px;">🛡️ 本站功能说明</button> · <a href="https://git.ozero.top/" target="_blank" rel="noopener noreferrer" style="color:var(--fg-muted);font-size:12px;padding:0 4px;">🏠 主站点</a> · <span id="visitCounter" style="color:var(--fg-muted);font-size:12px;padding:0 4px;">📈 累计访问 <span id="visitCount">…</span> 次</span>
     </div>
     <div style="max-width:920px;margin:0 auto;line-height:1.75;color:var(--fg-subtle);font-size:11px;">
       说明:本站是独立开发的公开仓库检索工具,默认通过 GitHub REST Search API 获取数据;启用第三方代理时,请求由对应服务转发。本站不是 GitHub 官方产品,双方不存在隶属、代理、赞助或合作关系。GitHub 名称及相关标识的权利归 GitHub, Inc. 所有,仓库内容权利归相应权利人所有。检索结果仅供查询参考,具体信息和使用条件请以 GitHub 官方页面、对应仓库页面及许可证为准。
@@ -165,16 +166,16 @@
   </footer>
 
   <!-- 代理设置面板(匿名代理,与 Token 互斥) -->
-  <div id="settingsMask" style="position:fixed;inset:0;background:rgba(1,4,9,.55);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:none;z-index:100;"></div>
-  <div id="settingsPanel" style="position:fixed;inset:0;margin:auto;width:94%;max-width:780px;height:fit-content;max-height:min(86vh, calc(100vh - 32px));overflow-y:auto;background:var(--glass-bg-strong);backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%);border:1px solid var(--border-default);border-radius:var(--radius-md);padding:20px 26px;color:var(--fg-default);z-index:101;display:none;box-shadow:0 22px 60px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.05);">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;position:sticky;top:-18px;background:var(--glass-bg-strong);padding:4px 0 6px;z-index:2;border-bottom:1px solid rgba(255,255,255,.04);">
-      <h3 style="font-size:16px;background:linear-gradient(135deg,#e8edf7 0%,#9ac0ff 60%,#b9ecbf 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;margin:0;">⚙ GitHub API 代理设置</h3>
+  <div id="settingsMask" style="position:fixed;inset:0;background:rgba(1,4,9,.45);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:none;z-index:100;"></div>
+  <div id="settingsPanel" style="position:fixed;inset:0;margin:auto;width:94%;max-width:780px;height:fit-content;max-height:min(86vh, calc(100vh - 32px));overflow-y:auto;background:var(--surface);border:none;border-radius:var(--radius-md);padding:22px 28px;color:var(--fg-default);z-index:101;display:none;box-shadow:var(--neu-raised-lg);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;position:sticky;top:-20px;background:var(--surface);padding:6px 0 8px;z-index:2;box-shadow:0 1px 0 var(--neu-dark);">
+      <h3 style="font-size:16px;color:var(--fg-default);margin:0;">⚙ GitHub API 代理设置</h3>
       <button id="closeSettings" class="link" style="font-size:16px;">✕</button>
     </div>
 
-    <div style="margin-bottom:16px;">
-      <label style="font-size:12px;color:var(--fg-muted);display:block;margin-bottom:6px;">API 代理地址(仅使用你信任的 HTTPS 服务)</label>
-      <input id="cfgProxy" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="默认 https://api.github.com；自定义示例：https://proxy.example.com/api/github" style="width:100%;padding:8px 12px;background:rgba(0,0,0,.3);border:1px solid var(--border-default);border-radius:var(--radius-sm);color:var(--fg-default);font-size:13px;outline:none;" />
+    <div style="margin-bottom:18px;">
+      <label style="font-size:12px;color:var(--fg-muted);display:block;margin-bottom:8px;font-weight:500;">API 代理地址<span style="color:var(--fg-subtle);font-weight:400;">(仅使用你信任的 HTTPS 服务)</span></label>
+      <input id="cfgProxy" type="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="默认 https://api.github.com；自定义示例：https://proxy.example.com/api/github" style="width:100%;padding:12px 16px;background:var(--surface);border:none;border-radius:var(--radius-sm);box-shadow:var(--neu-pressed-sm);color:var(--fg-default);font-size:13px;outline:none;transition:box-shadow .18s;" />
       <div class="proxy-preset-label">
         <span>快捷节点</span>
         <span>第三方节点已于 2026-08-23 通过 Search API 与 CORS 实测</span>
@@ -193,24 +194,25 @@
           <small>国内优化 · 匿名</small>
         </button>
       </div>
-      
-      <p style="font-size:11px;color:var(--fg-subtle);margin-top:8px;">说明:公共代理由第三方运营,可读取搜索关键词及 GitHub API 返回内容,可用性也可能随时变化。本站仅预置当前实测可用的匿名节点,不代表对其长期可用性或服务作背书。
+
+      <p style="font-size:11px;color:var(--fg-subtle);margin-top:12px;line-height:1.7;">说明:公共代理由第三方运营,可读取搜索关键词及 GitHub API 返回内容,可用性也可能随时变化。本站仅预置当前实测可用的匿名节点,不代表对其长期可用性或服务作背书。
       <span style="color:var(--attention-fg)">启用前会自动检测;代理模式绝不携带 Token。已启用 Token 时不能切换代理,刷新页面自动切回官方 api.github.com。</span></p>
     </div>
 
-    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+    <!-- 操作按钮区:主操作(检测并启用)+ 次操作(恢复默认)在左,危险操作(清除历史)在右 -->
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding-top:14px;box-shadow:0 -1px 0 var(--neu-dark);">
       <button id="cfgSave" class="primary">检测并启用</button>
-      <button id="cfgReset" class="btn" style="background:rgba(255,255,255,.04);color:var(--fg-default);border:1px solid var(--border-default);box-shadow:none;">恢复默认</button>
-      <button id="cfgClearHistory" class="btn" style="margin-left:auto;padding:6px 12px;font-size:12px;">清除搜索历史</button>
+      <button id="cfgReset" class="btn btn-ghost" style="background:var(--surface);color:var(--fg-default);">恢复默认</button>
+      <button id="cfgClearHistory" class="btn btn-sm" style="margin-left:auto;">清除搜索历史</button>
     </div>
-    <div id="cfgMsg" style="margin-top:12px;font-size:12px;color:var(--accent-fg);min-height:16px;"></div>
+    <div id="cfgMsg" style="margin-top:12px;font-size:12px;color:var(--accent-fg);min-height:16px;padding:0 4px;"></div>
   </div>
 
   <!-- Personal Token 独立面板(与代理设置分开) -->
-  <div id="tokenMask" style="position:fixed;inset:0;background:rgba(1,4,9,.55);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:none;z-index:100;"></div>
-  <div id="tokenPanel" style="position:fixed;inset:0;margin:auto;width:94%;max-width:680px;height:fit-content;max-height:min(86vh, calc(100vh - 32px));overflow-y:auto;background:var(--glass-bg-strong);backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%);border:1px solid var(--border-default);border-radius:var(--radius-md);padding:20px 26px;color:var(--fg-default);z-index:101;display:none;box-shadow:0 22px 60px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.05);">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;position:sticky;top:-18px;background:var(--glass-bg-strong);padding:4px 0 6px;z-index:2;border-bottom:1px solid rgba(255,255,255,.04);">
-      <h3 style="font-size:16px;background:linear-gradient(135deg,#ffdf8e 0%,#d29922 55%,#9ac0ff 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;margin:0;">🔑 Personal Token 设置(💡 按账号显著提升 GitHub Search 配额)</h3>
+  <div id="tokenMask" style="position:fixed;inset:0;background:rgba(1,4,9,.45);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:none;z-index:100;"></div>
+  <div id="tokenPanel" style="position:fixed;inset:0;margin:auto;width:94%;max-width:680px;height:fit-content;max-height:min(86vh, calc(100vh - 32px));overflow-y:auto;background:var(--surface);border:none;border-radius:var(--radius-md);padding:22px 28px;color:var(--fg-default);z-index:101;display:none;box-shadow:var(--neu-raised-lg);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;position:sticky;top:-20px;background:var(--surface);padding:6px 0 8px;z-index:2;box-shadow:0 1px 0 var(--neu-dark);">
+      <h3 style="font-size:16px;color:var(--attention-fg);margin:0;">🔑 Personal Token 设置(💡 按账号显著提升 GitHub Search 配额)</h3>
       <button id="closeToken" class="link" style="font-size:16px;">✕</button>
     </div>
 
@@ -219,8 +221,8 @@
         <label style="font-size:12px;color:var(--fg-muted);">Personal Token(<b style="color:var(--danger-fg)">仅限本机/私密浏览器用!只直连 GitHub 官方 API</b>)</label>
         <button id="tokenToggleTutorial" type="button" class="link" style="font-size:11px;color:var(--accent-fg);padding:2px 4px;">📖 如何获取 Token?</button>
       </div>
-      <input id="tokenInput" type="password" autocomplete="new-password" autocapitalize="none" spellcheck="false" aria-describedby="tokenSecurityNote" placeholder="ghp_xxxxxxxxxxxxxxx 或 github_pat_xxxxxx" style="width:100%;padding:8px 12px;background:rgba(0,0,0,.3);border:1px solid var(--border-default);border-radius:var(--radius-sm);color:var(--fg-default);font-size:13px;outline:none;" />
-      <div id="tokenTutorialBox" style="display:none;margin-top:10px;padding:12px 14px;border-radius:10px;background:rgba(47,129,247,.05);border:1px solid rgba(47,129,247,.22);font-size:11.5px;color:var(--fg-muted);line-height:1.7;">
+      <input id="tokenInput" type="password" autocomplete="new-password" autocapitalize="none" spellcheck="false" aria-describedby="tokenSecurityNote" placeholder="ghp_xxxxxxxxxxxxxxx 或 github_pat_xxxxxx" style="width:100%;padding:10px 14px;background:var(--surface);border:none;border-radius:var(--radius-sm);box-shadow:var(--neu-pressed-sm);color:var(--fg-default);font-size:13px;outline:none;" />
+      <div id="tokenTutorialBox" style="display:none;margin-top:10px;padding:12px 14px;border-radius:var(--radius-sm);background:var(--canvas-inset);box-shadow:var(--neu-pressed-sm);font-size:11.5px;color:var(--fg-muted);line-height:1.7;">
         <div style="font-weight:600;color:var(--fg-default);font-size:12px;margin-bottom:8px;">推荐使用 <b style="color:var(--accent-fg)">Fine-grained Token</b>(细粒度,可零权限,比 Classic 更安全)</div>
         <ol style="margin:0;padding-left:20px;">
           <li>GitHub 登录后,右上角头像 → <b>Settings</b>(个人设置,不是仓库设置)。</li>
@@ -234,7 +236,7 @@
               <li><b>Permissions 板块:</b>所有权限保持默认 <b>No access</b>,不要勾任何东西。</li>
             </ul>
           </li>
-          <li>最底下点 <b>Generate token</b>,复制以 <code style="background:rgba(110,168,255,.12);padding:1px 5px;border-radius:3px;">github_pat_</code> 开头的字符串,立刻粘贴到上面的输入框。</li>
+          <li>最底下点 <b>Generate token</b>,复制以 <code style="background:var(--canvas-inset);padding:2px 6px;border-radius:4px;box-shadow:var(--neu-pressed-sm);">github_pat_</code> 开头的字符串,立刻粘贴到上面的输入框。</li>
           <li><span style="color:var(--attention-fg)">⚠ Token 只显示一次</span>,关闭页面后再也看不到,丢了重新生成一个就行。</li>
         </ol>
       </div>
@@ -245,7 +247,7 @@
     </div>
 
     <!-- 专业说明:什么时候需要填写 Personal Token(官方口径) -->
-    <div style="padding:12px 14px;border-radius:12px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);margin-bottom:14px;font-size:12px;line-height:1.85;color:var(--fg-muted);">
+    <div style="padding:14px 16px;border-radius:var(--radius-sm);background:var(--canvas-inset);box-shadow:var(--neu-pressed-sm);margin-bottom:14px;font-size:12px;line-height:1.85;color:var(--fg-muted);">
       <div style="font-weight:600;color:var(--fg-default);font-size:13px;margin-bottom:8px;">🎯 什么时候需要设置 Personal Token(对照以下任意 1 条即建议填写 Fine-grained Token)</div>
       <ol style="margin:0;padding-left:20px;">
         <li><b>搜索频次较高</b>:单人次连续搜索、翻页 ≥ 3 次/分钟,或同一时间段内切换筛选器、刷新热门 ≥ 5 次,未认证配额按出口 IP 计算,叠加后极易触发 403 限流。</li>
@@ -254,24 +256,24 @@
         <li><b>运营商公网段被 GitHub 区域 403</b>:部分移动/广电/小运营商出口被 GitHub 直接拦截(哪怕 0 请求也报 403 blocked due to IP),使用 Fine-grained Token 配合合法认证可解除大多数拦截。</li>
         <li><b>部署到公共服务场景</b>:本站作为团队共享工具提供给同事、合作伙伴使用时,建议引导每位用户独立填写 Token,已认证配额按账号独立计算,避免互相挤占配额。</li>
       </ol>
-      <div style="margin-top:8px;padding-top:8px;border-top:1px dashed rgba(255,255,255,.06);color:var(--fg-subtle);">
+      <div style="margin-top:8px;padding-top:8px;box-shadow:0 -1px 0 var(--neu-dark);color:var(--fg-subtle);">
         <b style="color:var(--fg-muted)">✅ 无需填写的情况(保持默认未认证即可)</b>:单次检索少量仓库、每人独立公网 IP 无共享出口、仅偶尔查询关键词或查看近期热榜仓库。
       </div>
     </div>
 
-    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding-top:14px;box-shadow:0 -1px 0 var(--neu-dark);">
       <button id="tokenSaveBtn" class="primary">本次会话使用 Token</button>
-      <button id="tokenClearBtn" class="btn" style="padding:8px 16px;font-size:13px;">清除 Token</button>
-      <button id="tokenCloseBtn" class="btn" style="margin-left:auto;background:rgba(255,255,255,.04);color:var(--fg-default);border:1px solid var(--border-default);box-shadow:none;">关闭</button>
+      <button id="tokenClearBtn" class="btn btn-sm">清除 Token</button>
+      <button id="tokenCloseBtn" class="btn btn-ghost" style="margin-left:auto;">关闭</button>
     </div>
-    <div id="tokenMsg" style="margin-top:12px;font-size:12px;color:var(--attention-fg);min-height:16px;"></div>
+    <div id="tokenMsg" style="margin-top:12px;font-size:12px;color:var(--attention-fg);min-height:16px;padding:0 4px;"></div>
   </div>
 
   <!-- 精准度说明面板(面板放在 mask 内部,mask 为唯一滚动层 → 面板本身永无内部滚动条) -->
-  <div id="accuracyMask" style="position:fixed;inset:0;background:rgba(1,4,9,.55);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:none;z-index:100;overflow-y:auto;padding:24px 0;">
-    <div id="accuracyPanel" style="position:relative;flex:0 0 auto;margin:auto;width:min(calc(100vw - 24px), 1120px);max-width:1120px;height:fit-content;overflow-y:visible;background:var(--glass-bg-strong);backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%);border:1px solid var(--border-default);border-radius:var(--radius-md);padding:24px 30px;color:var(--fg-default);display:block;box-shadow:0 22px 60px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.05);">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding:4px 0 6px;border-bottom:1px solid rgba(255,255,255,.04);">
-        <h3 style="font-size:16px;background:linear-gradient(135deg,#e8edf7 0%,#9ac0ff 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;margin:0;line-height:1.5;">🛡️ 本站功能说明  功能版本:v3.0.001</h3>
+  <div id="accuracyMask" style="position:fixed;inset:0;background:rgba(1,4,9,.45);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:none;z-index:100;overflow-y:auto;padding:24px 0;">
+    <div id="accuracyPanel" style="position:relative;flex:0 0 auto;margin:auto;width:min(calc(100vw - 24px), 1120px);max-width:1120px;height:fit-content;overflow-y:visible;background:var(--surface);border:none;border-radius:var(--radius-md);padding:26px 32px;color:var(--fg-default);display:block;box-shadow:var(--neu-raised-lg);">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding:6px 0 8px;box-shadow:0 1px 0 var(--neu-dark);">
+        <h3 style="font-size:16px;color:var(--fg-default);margin:0;line-height:1.5;">🛡️ 本站功能说明  功能版本:v3.0.001  <a href="https://github.com/Ozero-top/Github-Search" target="_blank" rel="noopener noreferrer" style="font-size:12px;color:var(--accent-fg);margin-left:8px;vertical-align:middle;">项目地址：https://github.com/Ozero-top/Github-Search</a></h3>
         <button id="closeAccuracy" class="link" style="font-size:16px;min-width:28px;min-height:28px;">✕</button>
       </div>
 
@@ -283,7 +285,7 @@
         </p>
 
         <div class="panel-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px 18px;">
-          <div style="padding:14px 18px;border-radius:12px;background:rgba(47,129,247,.06);border:1px solid rgba(47,129,247,.22);">
+          <div style="padding:14px 18px;border-radius:var(--radius-sm);background:var(--canvas-inset);box-shadow:var(--neu-pressed-sm);">
             <div style="font-weight:600;color:var(--accent-fg);font-size:13.5px;margin-bottom:10px;">当前提供的功能</div>
             <ul style="margin:0;padding-left:20px;list-style:disc;">
               <li style="margin-bottom:6px;"><b>公开仓库搜索</b>:支持关键词、GitHub qualifier 语法以及语言、Star、更新时间、匹配字段和排序筛选。</li>
@@ -303,7 +305,7 @@
             </ul>
           </div>
 
-          <div style="padding:14px 18px;border-radius:12px;background:rgba(177,186,196,.05);border:1px solid rgba(177,186,196,.2);">
+          <div style="padding:14px 18px;border-radius:var(--radius-sm);background:var(--canvas-inset);box-shadow:var(--neu-pressed-sm);">
             <div style="font-weight:600;color:var(--fg-default);font-size:13.5px;margin-bottom:10px;">访问方式与数据边界</div>
             <ul style="margin:0;padding-left:20px;list-style:disc;">
               <li style="margin-bottom:6px;"><b>默认直连</b>:未设置代理时,请求由浏览器直接发送至 <code>https://api.github.com</code>。</li>
@@ -316,7 +318,7 @@
           </div>
         </div>
 
-        <div style="margin-top:18px;padding:14px 18px;border-radius:12px;background:rgba(210,153,34,.06);border:1px solid rgba(210,153,34,.22);">
+        <div style="margin-top:18px;padding:14px 18px;border-radius:var(--radius-sm);background:rgba(154,103,0,0.08);box-shadow:var(--neu-pressed-sm);">
           <div style="font-weight:600;color:var(--attention-fg);font-size:13.5px;margin-bottom:8px;">与 GitHub 官方服务的关系</div>
           <div style="font-size:12.5px;line-height:1.95;">GitHub 提供仓库托管、搜索 API 及账号与协作服务;本站仅使用其公开接口提供独立的检索界面。仓库详情、许可证、账号信息及平台规则应以
             <a href="https://github.com/search" target="_blank" rel="noopener noreferrer" style="color:var(--accent-fg);">GitHub 官方页面</a>
@@ -331,6 +333,6 @@
     </div>
   </div>
 
-<script src="assets/app.js?v=20260824-9" defer></script>
+<script src="assets/app.js?v=20260903-rerank" defer></script>
 </body>
 </html>
