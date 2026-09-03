@@ -980,12 +980,15 @@
       var topics = (repo.topics || []).map(function (x) { return String(x).toLowerCase(); });
       var stars = Math.max(0, parseInt(repo.stargazers_count,10) || 0);
       var created = repo.created_at ? new Date(repo.created_at).getTime() : Date.now();
+      // 更新时间:GitHub Search API 返回 pushed_at 表示仓库最近推送时间。
+      // 缺失时退化为 0,排序时自然落到最后(避免 NaN 干扰)。
+      var pushed = repo.pushed_at ? new Date(repo.pushed_at).getTime() : 0;
       var now = Date.now();
       var yearsOld = Math.max(0.1, (now - created) / 31536000000);
       var starDensity = Math.log10(stars + 1) / (yearsOld + 0.5);
       var textHasCJK = hasCJKChars(desc) || hasCJKChars(repo.name) || hasCJKChars(repo.description);
       return { repo:repo, idx:idx, owner:owner, name:name, fullName:fullName, desc:desc, topics:topics,
-        stars:stars, starDensity:starDensity, textHasCJK:textHasCJK };
+        stars:stars, starDensity:starDensity, textHasCJK:textHasCJK, pushed:pushed };
     });
 
     prepared.forEach(function (r) {
@@ -1044,7 +1047,15 @@
       r._score = score;
     });
 
-    prepared.sort(function (a, b) { return b._score - a._score; });
+    // 排序规则(按重要性递减):
+    //   1. 更新日期(pushed_at)降序 → 最近更新排前(用户指定排序维度)
+    //   2. 相关性得分降序 → 同更新时间下,更匹配的靠前
+    //   3. 原索引升序 → 稳定排序,避免同分乱跳
+    prepared.sort(function (a, b) {
+      if (a.pushed !== b.pushed) return b.pushed - a.pushed;
+      if (b._score !== a._score) return b._score - a._score;
+      return a.idx - b.idx;
+    });
     return prepared.map(function (x) { return x.repo; });
   }
 
@@ -1440,21 +1451,12 @@
       if (currentQ) { page = page || 1; doSearch(); }
       else writeHash();
     });
-    // 切换精排视觉反馈:选中时胶囊高亮
+    // 切换精排视觉反馈:选中时切换为「按下」状态(由 CSS .is-active 接管样式)
     var toggleLabel = document.getElementById('rerankToggle');
     if (toggleLabel) {
       var syncLabel = function () {
-        if (rerankCb.checked) {
-          toggleLabel.style.background = 'rgba(110,168,255,.18)';
-          toggleLabel.style.borderColor = 'rgba(110,168,255,.55)';
-          toggleLabel.style.color = 'var(--accent-fg)';
-          toggleLabel.style.boxShadow = '0 0 14px var(--accent-glow)';
-        } else {
-          toggleLabel.style.background = 'rgba(110,168,255,.06)';
-          toggleLabel.style.borderColor = 'rgba(110,168,255,.22)';
-          toggleLabel.style.color = 'var(--fg-muted)';
-          toggleLabel.style.boxShadow = 'none';
-        }
+        if (rerankCb.checked) toggleLabel.classList.add('is-active');
+        else toggleLabel.classList.remove('is-active');
       };
       rerankCb.addEventListener('change', syncLabel);
       syncLabel();
@@ -1996,5 +1998,44 @@
   } else {
     // 首次加载热门项目(非强制,保持 init 文案)
     loadTrending(false);
+  }
+
+  /* ---------- 累计访问计数(KV 计数,同一 IP 30 分钟内只计一次) ---------- */
+   /* ---------- 下面地址需要修改为实际的计数地址 ---------- */
+  var VISIT_API_URL = 'https://git.com/api/visit';
+
+  function updateVisitCount(value) {
+    var el = document.getElementById('visitCount');
+    if (el && value != null) el.textContent = value;
+  }
+
+  function trackVisit() {
+    var url = VISIT_API_URL || '/api/visit';
+    // 5 秒超时,防止 workers.dev 被墙时一直卡在 "…"
+    var controller = new AbortController();
+    var timeoutId = setTimeout(function () { controller.abort(); }, 5000);
+    fetch(url, { method: 'GET', credentials: 'omit', cache: 'no-store', signal: controller.signal })
+      .then(function (res) { clearTimeout(timeoutId); return res.ok ? res.json() : null; })
+      .then(function (data) {
+        if (data && data.totalFormatted != null) {
+          updateVisitCount(data.totalFormatted);
+        } else if (data && data.total != null) {
+          updateVisitCount(String(data.total));
+        } else {
+          updateVisitCount('0');
+        }
+      })
+      .catch(function () {
+        clearTimeout(timeoutId);
+        // 接口不可用时显示 0,不报错
+        updateVisitCount('0');
+      });
+  }
+
+  // 页面空闲时上报访问,避免阻塞首屏渲染
+  if ('requestIdleCallback' in window) {
+    window.requestIdleCallback(trackVisit, { timeout: 3000 });
+  } else {
+    setTimeout(trackVisit, 800);
   }
 })();
